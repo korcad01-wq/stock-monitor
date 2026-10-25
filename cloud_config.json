@@ -1,0 +1,14 @@
+{
+  "market": "KRW-XRP",
+  "target_rate": 3.0,
+  "alert_rate": -2.0,
+  "quiet_start": "00:00",
+  "quiet_end": "07:00",
+  "push_level": "all",
+  "cross_enabled": true,
+  "cross_intervals": "15,60",
+  "cross_pairs": "20/60,60/120",
+  "ma_lines": "5,10,20,60,120",
+  "cross_approach_gap": 0.15,
+  "entry_price": 0.0
+}
