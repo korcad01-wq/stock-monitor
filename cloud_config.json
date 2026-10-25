@@ -10,5 +10,5 @@
   "cross_pairs": "20/60,60/120",
   "ma_lines": "5,10,20,60,120",
   "cross_approach_gap": 0.15,
-  "entry_price": 1800.0
+  "entry_price": 0.0
 }
