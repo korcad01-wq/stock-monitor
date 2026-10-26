@@ -40,6 +40,9 @@ DEFAULTS = {
     'regime_enabled': True,   # 비트코인 20일선 아래면 하락장 → 골든크로스 알림에 경고
     'cross_in_downtrend': 'tag',  # tag = 경고 붙여 보냄, mute = 하락장엔 골든크로스 알림 안 보냄
     'rapid_drop_pct': -3.0,   # 1시간 최고가 대비 이만큼 떨어지면 급락 경보(%). 0이면 끔
+    'btc_drop_pct': -2.0,     # 비트코인 1시간 최고가 대비 이만큼 떨어지면 경보 + 매수 중단(%). 0이면 끔
+    'buy_in_downtrend': 'half',  # 비트코인 하락장일 때 신규 매수: half = 비중 절반, block = 중단, allow = 그대로
+    'stop_step': 3.0,         # 평단 손절선(-sl%) 아래로 이만큼(%p) 더 빠질 때마다 손절 경보를 다시 울림
     'event_block_hours': 2,   # 경제 일정 전후 N시간은 모의 신규 매수 중단. 0이면 끔
     'events': [               # 한국 시간. FOMC 는 미국 14:00, CPI 는 미국 08:30 발표
         {'at': '2026-10-29T03:00:00+09:00', 'title': 'FOMC 금리 결정'},
