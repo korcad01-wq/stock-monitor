@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT))
 os.environ.setdefault('STOCK_SIM_HOME', tempfile.mkdtemp())
 
 from stock_sim import alerts, config, crosswatch, upbit  # noqa: E402
+from stock_sim import market as market_mod  # noqa: E402
 
 STATE = ROOT / 'state.json'
 
@@ -48,15 +49,22 @@ def main():
         pr = (t['price'] / entry - 1) * 100
         print(f'내 평단 {entry:,.2f}원 대비 {pr:+.2f}%')
         if pr <= cfg['alert_rate'] and st.get('pos_day') != day:
-            alerts.notify(f'{market} 보유 손실 경보', f"평단 {entry:,.2f}원 대비 {pr:+.2f}% (기준 {cfg['alert_rate']}%)")
+            alerts.notify(f'{market} 손절 규칙 경보',
+                          f"평단 {entry:,.2f}원 대비 {pr:+.2f}% (손절 {cfg['alert_rate']}%) → 규칙: 매도 검토")
             st['pos_day'] = day
     if t['change_rate'] >= cfg['target_rate'] and st.get('up_day') != day:
         alerts.notify(f'{market} 목표 상승', f"오늘 {t['change_rate']:+.2f}% (목표 {cfg['target_rate']}%)", level='info')
         st['up_day'] = day
 
+    # 차트 밖 위험: 하루 -5% 한도, 1시간 급락, 하락장 판정, FOMC·CPI 일정
+    caution = market_mod.run_checks(cfg, st, t)
+    if caution:
+        print(caution)
+
     cw = crosswatch.CrossWatcher(cfg)
     if st.get('market') == market:
         cw.load_state(st.get('cross', {}))
+    cw.caution = caution
     cw.check()
     print(cw.describe(), '| 마지막 확인 봉', cw.last_bar)
     st.update({'market': market, 'cross': cw.to_state()})
