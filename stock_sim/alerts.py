@@ -22,11 +22,12 @@ LEVELS = {
     'warn': ('stock_alarm.wav', 5, 'red_circle', '🔴'),            # 하락 경보 → 최대
     'cross': ('stock_cross.wav', 4, 'green_circle', '🟢'),          # 골든크로스 발생·정배열 → 높음
     'approach': ('stock_approach.wav', 3, 'yellow_circle', '🟡'),   # 골든크로스 임박 → 기본
+    'event': ('stock_approach.wav', 3, 'calendar', '📅'),          # 경제 일정·하락장 전환 → 기본
     'info': ('stock_notice.wav', 2, 'large_blue_circle', '🔵'),     # 체결·목표 → 낮음(휴대폰 무음)
 }
 PUSH_LEVELS = {
-    'all': {'warn', 'cross', 'approach', 'info'},
-    'signal': {'warn', 'cross', 'approach'},
+    'all': {'warn', 'cross', 'approach', 'event', 'info'},
+    'signal': {'warn', 'cross', 'approach', 'event'},
     'warn': {'warn'},
 }
 # 등록된 앱 ID가 있어야 토스트가 뜬다. Windows PowerShell 의 ID를 빌려 쓴다.
