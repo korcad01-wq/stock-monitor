@@ -141,21 +141,40 @@ def run_checks(cfg, st, ticker, notify=None):
     bth = cfg.get('btc_drop_pct')
     if bth and market != 'KRW-BTC':
         drop, high = rapid_drop('KRW-BTC')
-        if drop <= bth and now.timestamp() - st.get('btc_rapid_at', 0) > 2 * 3600 and not quiet:
+        # 진정 알림 뒤 다시 급락하면 30분 지나서부터 다시 알린다(기준선 근처 오락가락 방지)
+        if drop <= bth and not st.get('btc_drop_on') and now.timestamp() - st.get('btc_rapid_at', 0) > 1800 and not quiet:
             notify(f'비트코인 급락 경보 (1시간 {drop:+.1f}%)',
-                   f'비트코인 1시간 최고 대비 {drop:+.1f}% | {market}도 따라 빠질 수 있음 → 신규 매수 중단, 손절선 확인', 'warn')
+                   f'비트코인 1시간 최고 대비 {drop:+.1f}% | {market}도 따라 빠질 수 있음 '
+                   f'→ 모의 매수 중단(진정되면 다시 알림), 손절선 확인', 'warn')
             st['btc_rapid_at'] = now.timestamp()
+            st['btc_drop_on'] = True
+        elif drop > bth and st.get('btc_drop_on') and not quiet:  # buy_guard 와 같은 기준으로 풀린다
+            notify('비트코인 급락 진정 → 모의 매수 재개',
+                   f'비트코인 1시간 최고 대비 {drop:+.1f}% (기준 {bth}%) | 하락장 비중 규칙은 그대로 적용', 'event')
+            st.pop('btc_drop_on', None)
 
-    # 3) 하락장 판정(바뀔 때 한 번 알림) → 골든크로스 알림에 경고를 붙이는 데 씀
+    # 3) 하락장 판정 → 골든크로스 경고 + 모의 매수 비중(buy_in_downtrend). 상태나 설정이 바뀔 때 한 번 알림
     caution = ''
     if cfg.get('regime_enabled', True):
         regime, desc = btc_regime(cfg)
         if regime == 'down':
             caution = f'⚠ 하락장({desc}): 차트 신호 신뢰도 낮음'
-        prev = st.get('regime')
-        if prev and regime != prev and regime in ('down', 'normal') and not quiet:
-            notify('시장 하락장 진입' if regime == 'down' else '시장 하락장 벗어남',
-                   desc + (' | 골든크로스 신호는 경고를 붙여 보냅니다' if regime == 'down' else ''), 'event')
+        mode = cfg.get('buy_in_downtrend', 'half')
+        if mode not in ('block', 'allow'):
+            mode = 'half'
+        cur, sent_r = f'{regime}|{mode}', st.get('regime_sent')
+        if regime in ('down', 'normal') and cur != sent_r and not quiet:
+            ps = cfg.get('position_size', 100)
+            if regime == 'down':
+                title, body = {
+                    'half': ('비트코인 하락장 → 모의 매수 비중 절반', f'1회 매수 현금의 {ps:g}% → {ps / 2:g}%'),
+                    'block': ('비트코인 하락장 → 모의 매수 중단', '하락장을 벗어나면 다시 알림'),
+                    'allow': ('비트코인 하락장 진입', '매수 비중은 그대로(allow 설정)'),
+                }[mode]
+                notify(title, f'{desc} | {body} | 골든크로스 신호는 경고를 붙여 보냅니다', 'event')
+            elif sent_r and sent_r.startswith('down'):  # 처음 켰을 때 정상장이면 조용히 기록만
+                notify('하락장 벗어남 → 모의 매수 원래대로', f'{desc} | 1회 매수 현금의 {ps:g}%', 'event')
+            st['regime_sent'] = cur
         if regime in ('down', 'normal'):
             st['regime'] = regime
 
