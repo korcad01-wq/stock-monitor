@@ -12,6 +12,8 @@ DEFAULTS = {
     'target_rate': 1.4,       # 하루 목표 수익률(%)
     'alert_rate': -2.0,       # 하루 수익률이 이 값 이하로 떨어지면 알람(%)
     'max_daily_loss': -5.0,   # 모의계좌 하루 손실이 이 값 이하면 그날 신규 매수 중단(%)
+    'max_trades_per_day': 3,  # 하루 매수 횟수 한도(자동+수동). 0이면 제한 없음
+    'monthly_loss_limit': -15.0,  # 이달 손실이 이 값 이하면 그달 신규 매수 중단(%)
     'fee_rate': 0.05,         # 업비트 KRW 마켓 수수료(편도, %)
     'slippage': 0.05,         # 체결 미끄러짐 가정(편도, %)
     'initial_cash': 1000000,
@@ -34,6 +36,17 @@ DEFAULTS = {
     'cross_pairs': '20/60,60/120',     # 단기/장기 이평선 쌍
     'ma_lines': '5,10,20,60,120',      # 정배열 판단 이평선
     'cross_approach_gap': 0.15,        # 단기선이 장기선 아래 이 간격(%) 이내로 다가오면 '임박'
+    # 차트 밖 위험(market.py)
+    'regime_enabled': True,   # 비트코인 20일선 아래면 하락장 → 골든크로스 알림에 경고
+    'cross_in_downtrend': 'tag',  # tag = 경고 붙여 보냄, mute = 하락장엔 골든크로스 알림 안 보냄
+    'rapid_drop_pct': -3.0,   # 1시간 최고가 대비 이만큼 떨어지면 급락 경보(%). 0이면 끔
+    'event_block_hours': 2,   # 경제 일정 전후 N시간은 모의 신규 매수 중단. 0이면 끔
+    'events': [               # 한국 시간. FOMC 는 미국 14:00, CPI 는 미국 08:30 발표
+        {'at': '2026-10-29T03:00:00+09:00', 'title': 'FOMC 금리 결정'},
+        {'at': '2026-11-10T22:30:00+09:00', 'title': '미국 10월 CPI'},
+        {'at': '2026-12-10T04:00:00+09:00', 'title': 'FOMC 금리 결정(점도표)'},
+        {'at': '2026-12-10T22:30:00+09:00', 'title': '미국 11월 CPI'},
+    ],
     'quiet_start': '00:00',   # 이 시각부터 휴대폰 알림 보내지 않음(PC 시각 기준)
     'quiet_end': '07:00',     # 이 시각부터 다시 보냄. 둘이 같으면 방해금지 없음
 }
@@ -61,6 +74,6 @@ def parse_value(key, raw):
         return int(float(raw))
     if isinstance(base, float):
         return float(raw)
-    if isinstance(base, dict):
+    if isinstance(base, (dict, list)):
         return json.loads(raw)
     return raw
