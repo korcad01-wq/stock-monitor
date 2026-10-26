@@ -40,6 +40,8 @@ class CrossWatcher:
         self.next_fetch = {}    # 봉 단위 → 다음 조회 시각(요청 수 줄이기)
         self.approach_armed = {}  # (봉, 쌍) → 임박 알림 가능 여부
         self.aligned = {}       # 봉 단위 → 정배열 상태
+        self.caution = ''       # 하락장일 때 market.run_checks 가 채운다
+        self.downtrend_mode = cfg.get('cross_in_downtrend', 'tag')
 
     def describe(self):
         if not self.enabled:
@@ -88,6 +90,13 @@ class CrossWatcher:
         n = len(cl)
         tag = f'{self.market} {_label(iv)}'
         notify = alerts.notify
+        if self.caution:
+            # 금리·유가·전쟁처럼 차트 밖 사건이 시장을 끌어내릴 때는 크로스 신호가 잘 안 맞는다
+            if self.downtrend_mode == 'mute':
+                notify = lambda t, b, level=None: print(f'(하락장, 알림 생략) {t} | {b}', flush=True)
+            else:
+                caution = self.caution
+                notify = lambda t, b, level='cross': alerts.notify(t, f'{b}\n{caution}', level)
         if bar_t:
             start = datetime.strptime(bar_t, '%Y-%m-%dT%H:%M:%S').replace(tzinfo=timezone.utc)
             close = start + timedelta(minutes=1440 if iv == 'day' else int(iv))
