@@ -35,5 +35,7 @@
   "sl": 2.0,
   "stop_step": 3.0,
   "btc_drop_pct": -2.0,
+  "buy_in_downtrend": "half",
+  "position_size": 25,
   "entry_price": 1425.0
 }
