@@ -10,5 +10,27 @@
   "cross_pairs": "20/60,60/120",
   "ma_lines": "5,10,20,60,120",
   "cross_approach_gap": 0.15,
+  "max_daily_loss": -5.0,
+  "rapid_drop_pct": -3.0,
+  "regime_enabled": true,
+  "cross_in_downtrend": "tag",
+  "events": [
+    {
+      "at": "2026-10-29T03:00:00+09:00",
+      "title": "FOMC 금리 결정"
+    },
+    {
+      "at": "2026-11-10T22:30:00+09:00",
+      "title": "미국 10월 CPI"
+    },
+    {
+      "at": "2026-12-10T04:00:00+09:00",
+      "title": "FOMC 금리 결정(점도표)"
+    },
+    {
+      "at": "2026-12-10T22:30:00+09:00",
+      "title": "미국 11월 CPI"
+    }
+  ],
   "entry_price": 1425.0
 }
