@@ -1,7 +1,7 @@
 """GitHub Actions 에서 몇 분마다 한 번 실행되는 감시(실제 주문 없음).
 
 - 하락 경보: 업비트 하루 등락률이 alert_rate 이하(하루 1회)
-- 내 평단 기준 손실 경보: entry_price 를 넣었을 때(하루 1회)
+- 내 평단 기준 손절 경보: entry_price 를 넣었을 때(손절선에서 한 번, 더 빠지면 단계마다)
 - 골든크로스 임박·발생, 정배열: stock_sim.crosswatch 와 같은 규칙
 상태(state.json)는 워크플로가 actions/cache 로 다음 실행에 넘겨준다.
 휴대폰 알림 주제는 Secrets 의 NTFY_TOPIC 에서 읽는다.
@@ -45,13 +45,12 @@ def main():
         alerts.notify(f'{market} 하락 경보', f"오늘 {t['change_rate']:+.2f}% (기준 {cfg['alert_rate']}%) 현재가 {t['price']:,.2f}원")
         st['drop_day'] = day
     entry = float(cfg.get('entry_price') or 0)
-    if entry:
-        pr = (t['price'] / entry - 1) * 100
-        print(f'내 평단 {entry:,.2f}원 대비 {pr:+.2f}%')
-        if pr <= cfg['alert_rate'] and st.get('pos_day') != day:
-            alerts.notify(f'{market} 손절 규칙 경보',
-                          f"평단 {entry:,.2f}원 대비 {pr:+.2f}% (손절 {cfg['alert_rate']}%) → 규칙: 매도 검토")
-            st['pos_day'] = day
+    if entry:  # 손절선(-sl%)에서 한 번, 이후 stop_step %p 더 빠질 때마다 다시
+        if st.get('stop_entry') != entry:
+            st.pop('stop', None)
+        st['stop_entry'] = entry
+        pr = market_mod.stop_check(cfg, st, t['price'], entry, alerts.notify)
+        print(f"내 평단 {entry:,.2f}원 대비 {pr:+.2f}% (손절선 -{abs(cfg['sl'])}%)")
     if t['change_rate'] >= cfg['target_rate'] and st.get('up_day') != day:
         alerts.notify(f'{market} 목표 상승', f"오늘 {t['change_rate']:+.2f}% (목표 {cfg['target_rate']}%)", level='info')
         st['up_day'] = day
