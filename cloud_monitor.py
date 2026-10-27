@@ -59,6 +59,10 @@ def main():
     caution = market_mod.run_checks(cfg, st, t)
     if caution:
         print(caution)
+    try:  # 관심 종목 하루 한 번 요약(실시간 알림은 보유 종목만)
+        market_mod.run_digest(cfg, st)
+    except Exception as e:
+        print('요약 실패:', e)
 
     cw = crosswatch.CrossWatcher(cfg)
     if st.get('market') == market:
