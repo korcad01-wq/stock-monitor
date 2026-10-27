@@ -59,6 +59,10 @@ def main():
     caution = market_mod.run_checks(cfg, st, t)
     if caution:
         print(caution)
+    try:  # 관심 종목 ±5% 급등락은 실시간 최우선 알림
+        market_mod.run_movers(cfg, st)
+    except Exception as e:
+        print('급등락 확인 실패:', e)
     try:  # 관심 종목 하루 한 번 요약(실시간 알림은 보유 종목만)
         market_mod.run_digest(cfg, st)
     except Exception as e:
