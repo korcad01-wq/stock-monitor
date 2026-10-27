@@ -177,6 +177,43 @@ def run_digest(cfg, st, notify=None):
     st['digest_day'] = f'{now:%Y-%m-%d}'
 
 
+def run_movers(cfg, st, notify=None, tk=None):
+    """관심 종목 하루 등락률이 ±mover_pct 를 넘으면 다른 알림보다 앞서(최대 우선순위) 알린다.
+    급등은 🚀, 급락은 🚨 으로 따로 보내고, 같은 날 mover_pct 만큼 더 움직일 때(5→10→15%)만 다시 보낸다.
+    방해금지 중에는 보내지 않고 기록도 남기지 않아, 끝난 뒤에도 그 상태면 그때 보낸다. 반환: 보낸 알림 수."""
+    from .config import WATCHLIST, COIN_NAMES
+    th = abs(float(cfg.get('mover_pct') or 0))
+    if not th or alerts.in_quiet_hours(cfg, _now()):
+        return 0
+    day = upbit.trading_day()
+    if st.get('mover_day') != day:  # 업비트 등락률은 09:00 에 새로 시작
+        st['mover_day'], st['movers'] = day, {}
+    sent = st.setdefault('movers', {})
+    tk = tk or upbit.tickers(WATCHLIST)
+    hits = {'surge': [], 'plunge': []}
+    for m in WATCHLIST:
+        if m not in tk:
+            continue
+        r = tk[m]['change_rate']
+        step = int(abs(r) // th)  # 1 = 5%대, 2 = 10%대 ...
+        side = 'surge' if r > 0 else 'plunge'
+        key = f'{m}|{side}'
+        if step >= 1 and step > sent.get(key, 0):
+            sent[key] = step
+            p = tk[m]['price']
+            hits[side].append((abs(r), f"{COIN_NAMES.get(m[4:], m[4:])} {r:+.2f}% ({p:,.0f}원)" if p >= 100
+                               else f"{COIN_NAMES.get(m[4:], m[4:])} {r:+.2f}% ({p:,.4g}원)"))
+    n = 0
+    for side, word in (('plunge', '급락'), ('surge', '급등')):  # 급락을 먼저
+        rows = [t for _, t in sorted(hits[side], reverse=True)]
+        if rows:
+            (notify or alerts.notify)(f"[우선] 관심 종목 {word} {th:g}% {'이하' if side == 'plunge' else '이상'}: {rows[0].split(' (')[0]}"
+                                      + (f' 외 {len(rows) - 1}개' if len(rows) > 1 else ''),
+                                      '\n'.join(rows) + '\n(오늘 09:00 기준 등락률. 추격 매수·투매 전에 비트코인 흐름부터 확인)', side)
+            n += 1
+    return n
+
+
 def run_checks(cfg, st, ticker, notify=None):
     """모든 차트 밖 점검을 한 번 돈다. 반환: 하락장 경고 문구(없으면 '')."""
     notify = notify or alerts.notify
