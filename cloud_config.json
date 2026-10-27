@@ -37,5 +37,7 @@
   "btc_drop_pct": -2.0,
   "buy_in_downtrend": "half",
   "position_size": 25.0,
+  "digest_enabled": true,
+  "digest_time": "08:00",
   "entry_price": 1531.0
 }
