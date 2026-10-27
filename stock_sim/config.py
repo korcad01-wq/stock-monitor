@@ -7,6 +7,24 @@ HOME = Path(os.environ.get('STOCK_SIM_HOME') or Path(__file__).resolve().parent.
 HOME.mkdir(parents=True, exist_ok=True)
 CONFIG_PATH = HOME / 'config.json'
 
+# 종목 선택 목록: 업비트 원화 마켓 중 거래대금이 크고 상장 기간이 긴 대형 코인(2026-10 데이터 비교).
+# "꾸준히 오르는 코인"이 아니다 — 지난 1년은 BTC -37%, 나머지 -44~-73% 였다(TRX 만 -1%).
+WATCHLIST = ['KRW-BTC', 'KRW-ETH', 'KRW-XRP', 'KRW-SOL', 'KRW-TRX', 'KRW-LINK',
+             'KRW-ADA', 'KRW-DOGE', 'KRW-XLM', 'KRW-BCH']
+COIN_NAMES = {'BTC': '비트코인', 'ETH': '이더리움', 'XRP': '리플', 'SOL': '솔라나', 'TRX': '트론',
+              'LINK': '체인링크', 'ADA': '에이다', 'DOGE': '도지코인', 'XLM': '스텔라루멘', 'BCH': '비트코인캐시'}
+
+
+def market_label(m):
+    """'KRW-BTC' → 'KRW-BTC 비트코인' (화면 표시용)."""
+    name = COIN_NAMES.get(m.split('-')[-1])
+    return f'{m} {name}' if name else m
+
+
+def market_code(label):
+    """화면 표시 'KRW-BTC 비트코인' → 'KRW-BTC'."""
+    return label.split()[0] if label.strip() else label
+
 DEFAULTS = {
     'market': 'KRW-XRP',
     'target_rate': 1.4,       # 하루 목표 수익률(%)
@@ -43,6 +61,8 @@ DEFAULTS = {
     'btc_drop_pct': -2.0,     # 비트코인 1시간 최고가 대비 이만큼 떨어지면 경보 + 매수 중단(%). 0이면 끔
     'buy_in_downtrend': 'half',  # 비트코인 하락장일 때 신규 매수: half = 비중 절반, block = 중단, allow = 그대로
     'stop_step': 3.0,         # 평단 손절선(-sl%) 아래로 이만큼(%p) 더 빠질 때마다 손절 경보를 다시 울림
+    'digest_enabled': True,   # 관심 종목(WATCHLIST) 하루 한 번 요약 알림(클라우드 감시가 보냄, 무음)
+    'digest_time': '08:00',   # 요약 보내는 시각(한국 시간)
     'event_block_hours': 2,   # 경제 일정 전후 N시간은 모의 신규 매수 중단. 0이면 끔
     'events': [               # 한국 시간. FOMC 는 미국 14:00, CPI 는 미국 08:30 발표
         {'at': '2026-10-29T03:00:00+09:00', 'title': 'FOMC 금리 결정'},
