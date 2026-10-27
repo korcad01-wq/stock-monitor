@@ -112,6 +112,71 @@ def stop_check(cfg, st, price, entry, notify, key='stop'):
     return pr
 
 
+def cross_proximity(closes, short=20, long=60, look=5):
+    """단기선이 장기선 아래일 때 간격(%)과, 최근 look봉 속도로 좁혀지면 몇 봉 뒤 만나는지.
+    반환: (간격%, 예상 봉 수 또는 None) — 이미 위면 간격이 양수, 벌어지는 중이면 예상 None."""
+    if len(closes) < long + look:
+        return None, None
+    ma = lambda n, end: sum(closes[end - n:end]) / n
+    n = len(closes)
+    gap = (ma(short, n) / ma(long, n) - 1) * 100
+    gap0 = (ma(short, n - look) / ma(long, n - look) - 1) * 100
+    speed = (gap - gap0) / look  # 봉당 좁혀지는 폭(%p)
+    if gap >= 0 or speed <= 0:
+        return gap, None
+    return gap, -gap / speed
+
+
+def digest_text(watch=None):
+    """관심 종목 하루 요약. 일봉 기준(완성된 봉만): 20일선 위/아래, 20/60 골든·데드크로스.
+    실시간 알림은 보유 종목만 받고 나머지는 이 요약 하나로 본다(알림 피로 방지). 반환: (제목, 본문)."""
+    from .config import WATCHLIST, COIN_NAMES
+    watch = watch or WATCHLIST
+    tk = upbit.tickers(watch)
+    lines, above, crosses, near = [], 0, [], []
+    for m in watch:
+        coin = m.split('-')[1]
+        name = COIN_NAMES.get(coin, coin)
+        c = [b['c'] for b in upbit.candles(m, 'day', count=70)[:-1]]  # 진행 중인 오늘 봉은 뺀다
+        gap, eta = cross_proximity(c)
+        if eta is not None:
+            near.append((eta, f'{name} 간격 {gap:.1f}%, 좁혀지는 중(지금 속도면 약 {eta:.0f}일)'))
+        ma = lambda n, end: sum(c[end - n:end]) / n
+        t = tk.get(m, {'price': c[-1], 'change_rate': 0})
+        pos = ''
+        if len(c) >= 21:
+            up = c[-1] > ma(20, len(c))
+            above += up
+            pos = '20일선 위' if up else '20일선 아래'
+        if len(c) >= 61:
+            a0, b0, a1, b1 = ma(20, len(c) - 1), ma(60, len(c) - 1), ma(20, len(c)), ma(60, len(c))
+            if a0 <= b0 and a1 > b1:
+                crosses.append(f'🟢 {name} 일봉 골든크로스(20/60)')
+            elif a0 >= b0 and a1 < b1:
+                crosses.append(f'🔻 {name} 일봉 데드크로스(20/60)')
+        px = f"{t['price']:,.0f}" if t['price'] >= 100 else f"{t['price']:,.4g}"
+        lines.append(f"{name} {px}원 {t['change_rate']:+.1f}% · {pos}")
+    head = f'20일선 위 {above}개 / 아래 {len(watch) - above}개'
+    near = [f'  {t}' for _, t in sorted(near)[:3]]
+    body = '\n'.join([head] + (crosses or ['새 일봉 크로스 없음'])
+                     + (['일봉 골든크로스 가까운 순:'] + near if near else []) + [''] + lines)
+    return f'관심 종목 요약 ({_now():%m/%d %H:%M})', body
+
+
+def run_digest(cfg, st, notify=None):
+    """하루 한 번 digest_time(한국 시간) 이후 첫 실행에서 요약을 보낸다. 클라우드 감시에서만 부른다(PC와 중복 방지)."""
+    if not cfg.get('digest_enabled', True):
+        return
+    now = _now()
+    if f'{now:%H:%M}' < cfg.get('digest_time', '08:00') or st.get('digest_day') == f'{now:%Y-%m-%d}':
+        return
+    if alerts.in_quiet_hours(cfg, now):
+        return
+    title, body = digest_text()
+    (notify or alerts.notify)(title, body, 'info')  # 휴대폰에서는 소리 없이(낮음)
+    st['digest_day'] = f'{now:%Y-%m-%d}'
+
+
 def run_checks(cfg, st, ticker, notify=None):
     """모든 차트 밖 점검을 한 번 돈다. 반환: 하락장 경고 문구(없으면 '')."""
     notify = notify or alerts.notify
