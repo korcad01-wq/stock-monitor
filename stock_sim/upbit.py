@@ -34,6 +34,18 @@ def ticker(market):
     }
 
 
+def tickers(markets):
+    """여러 종목 현재가를 한 번에. {종목: {'price', 'change_rate'}}"""
+    data = _get('/ticker', {'markets': ','.join(markets)})
+    return {d['market']: {'price': d['trade_price'], 'change_rate': d['signed_change_rate'] * 100} for d in data}
+
+
+def orderbook(market):
+    """호가. 반환: (매도호가 [(가격, 수량)] 낮은 가격부터, 매수호가 [(가격, 수량)] 높은 가격부터)."""
+    units = _get('/orderbook', {'markets': market})[0]['orderbook_units']
+    return [(u['ask_price'], u['ask_size']) for u in units], [(u['bid_price'], u['bid_size']) for u in units]
+
+
 def markets():
     return [m['market'] for m in _get('/market/all', {'isDetails': 'false'}) if m['market'].startswith('KRW-')]
 
