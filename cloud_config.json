@@ -39,5 +39,6 @@
   "position_size": 25.0,
   "digest_enabled": true,
   "digest_time": "08:00",
+  "mover_pct": 5.0,
   "entry_price": 1531.0
 }
