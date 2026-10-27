@@ -20,15 +20,17 @@ SOUNDS = Path(__file__).resolve().parent.parent / 'sounds'
 # ntfy 는 태그 이름이 이모지면 제목 앞에 붙여 주므로 제목에는 기호를 넣지 않는다.
 LEVELS = {
     'warn': ('stock_alarm.wav', 5, 'red_circle', '🔴'),            # 하락 경보 → 최대
+    'surge': ('stock_alarm.wav', 5, 'rocket', '🚀'),               # 관심 종목 하루 +5% 이상 → 최대(따로 표시)
+    'plunge': ('stock_alarm.wav', 5, 'rotating_light', '🚨'),      # 관심 종목 하루 -5% 이하 → 최대(따로 표시)
     'cross': ('stock_cross.wav', 4, 'green_circle', '🟢'),          # 골든크로스 발생·정배열 → 높음
     'approach': ('stock_approach.wav', 3, 'yellow_circle', '🟡'),   # 골든크로스 임박 → 기본
     'event': ('stock_approach.wav', 3, 'calendar', '📅'),          # 경제 일정·하락장 전환 → 기본
     'info': ('stock_notice.wav', 2, 'large_blue_circle', '🔵'),     # 체결·목표 → 낮음(휴대폰 무음)
 }
 PUSH_LEVELS = {
-    'all': {'warn', 'cross', 'approach', 'event', 'info'},
-    'signal': {'warn', 'cross', 'approach', 'event'},
-    'warn': {'warn'},
+    'all': {'warn', 'surge', 'plunge', 'cross', 'approach', 'event', 'info'},
+    'signal': {'warn', 'surge', 'plunge', 'cross', 'approach', 'event'},
+    'warn': {'warn', 'surge', 'plunge'},
 }
 # 등록된 앱 ID가 있어야 토스트가 뜬다. Windows PowerShell 의 ID를 빌려 쓴다.
 APP_ID = r'{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
