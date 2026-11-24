@@ -80,4 +80,11 @@ def main():
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    import urllib.error
+    try:
+        sys.exit(main())
+    except (urllib.error.URLError, OSError, TimeoutError) as e:
+        # 2026-11-23 10:30·10:35 KST: 러너에서 api.upbit.com 이름 풀이 실패(gaierror) 두 번 → 'All jobs have failed' 메일.
+        # 시세를 못 받은 한 번은 건너뛰어도 5분 뒤 다음 실행이 덮는다. 실패로 끝내 메일을 보내지 않고 0 으로 끝낸다.
+        print(f'네트워크 일시 오류라 이번 실행은 건너뜀(다음 실행에서 다시): {e}')
+        sys.exit(0)
