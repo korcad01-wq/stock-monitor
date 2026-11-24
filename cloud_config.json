@@ -1,5 +1,5 @@
 {
-  "market": "KRW-BTC",
+  "market": "KRW-XRP",
   "target_rate": 3.0,
   "alert_rate": -2.0,
   "quiet_start": "00:00",
@@ -32,7 +32,7 @@
       "title": "미국 11월 CPI"
     }
   ],
-  "sl": 2.0,
+  "sl": 0.0,
   "stop_step": 3.0,
   "btc_drop_pct": -2.0,
   "buy_in_downtrend": "half",
