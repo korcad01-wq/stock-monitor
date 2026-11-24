@@ -26,10 +26,12 @@ LEVELS = {
     'approach': ('stock_approach.wav', 3, 'yellow_circle', '🟡'),   # 골든크로스 임박 → 기본
     'event': ('stock_approach.wav', 3, 'calendar', '📅'),          # 경제 일정·하락장 전환 → 기본
     'info': ('stock_notice.wav', 2, 'large_blue_circle', '🔵'),     # 체결·목표 → 낮음(휴대폰 무음)
+    'scalp_buy': ('stock_cross.wav', 4, 'chart_with_upwards_trend', '📈'),  # 초단타 모의 매수(추천 종목) → 높음
+    'scalp_sell': ('stock_approach.wav', 3, 'moneybag', '💰'),              # 초단타 모의 청산 → 기본
 }
 PUSH_LEVELS = {
-    'all': {'warn', 'surge', 'plunge', 'cross', 'approach', 'event', 'info'},
-    'signal': {'warn', 'surge', 'plunge', 'cross', 'approach', 'event'},
+    'all': {'warn', 'surge', 'plunge', 'cross', 'approach', 'event', 'info', 'scalp_buy', 'scalp_sell'},
+    'signal': {'warn', 'surge', 'plunge', 'cross', 'approach', 'event', 'scalp_buy', 'scalp_sell'},
     'warn': {'warn', 'surge', 'plunge'},
 }
 # 등록된 앱 ID가 있어야 토스트가 뜬다. Windows PowerShell 의 ID를 빌려 쓴다.
