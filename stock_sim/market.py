@@ -96,6 +96,15 @@ def stop_check(cfg, st, price, entry, notify, key='stop'):
     """평단 대비 손절선(-sl%) 경보. 더 떨어지면 stop_step %p 마다 다시 울리고,
     손절선 위로 0.5%p 회복하면 처음부터 다시 감시한다. 반환: 평단 대비 %."""
     pr = (price / entry - 1) * 100
+    if not 0.2 <= price / entry <= 5:   # 다른 종목의 평단을 넣은 경우(2026-11-23 BTC 평단으로 XRP -100% 경보)
+        mark = f"{cfg['market']}:{entry}"
+        if st.get(key + '_mismatch') != mark and not alerts.in_quiet_hours(cfg, _now()):
+            notify(f"{cfg['market']} 평단 확인", f'넣은 평단 {entry:,.2f}원과 현재가 {price:,.2f}원의 차이가 너무 큽니다. '
+                   f'다른 종목의 평단인지 확인하세요. 고칠 때까지 손절 경보를 쉽니다.', 'event')
+            st[key + '_mismatch'] = mark
+        st.pop(key, None)
+        return pr
+    st.pop(key + '_mismatch', None)
     line = -abs(float(cfg.get('sl') or 2))
     step = abs(float(cfg.get('stop_step') or 3))
     done = st.get(key)  # 마지막으로 울린 단계(0 = 손절선, 1 = 한 단계 더 아래 …)
